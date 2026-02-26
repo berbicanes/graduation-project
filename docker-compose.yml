@@ -53,6 +53,52 @@ services:
     networks:
       - healthcare-net
 
+  patient:
+    build:
+      context: ./services/patient
+    ports:
+      - "8002:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://healthcare:healthcare_secret@postgres:5432/patient_db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_ALGORITHM: HS256
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare-net
+
+  appointment:
+    build:
+      context: ./services/appointment
+    ports:
+      - "8003:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://healthcare:healthcare_secret@postgres:5432/appointment_db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_ALGORITHM: HS256
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare-net
+
 volumes:
   postgres_data:
 
