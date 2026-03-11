@@ -1,0 +1,128 @@
+# Traefik Dynamic Configuration — Route Rules & Middleware
+
+http:
+  # ---------- Middlewares ----------
+  middlewares:
+    auth-forward:
+      forwardAuth:
+        address: "http://auth:8000/auth/verify"
+        authResponseHeaders:
+          - X-User-Id
+          - X-User-Role
+          - X-User-Email
+
+    rate-limit-auth:
+      rateLimit:
+        average: 100
+        period: 1m
+        burst: 20
+
+    strip-auth-prefix:
+      stripPrefix:
+        prefixes:
+          - /auth
+
+    strip-patients-prefix:
+      stripPrefix:
+        prefixes:
+          - /patients
+
+    strip-appointments-prefix:
+      stripPrefix:
+        prefixes:
+          - /appointments
+
+    strip-notes-prefix:
+      stripPrefix:
+        prefixes:
+          - /notes
+
+    strip-invoices-prefix:
+      stripPrefix:
+        prefixes:
+          - /invoices
+
+  # ---------- Routers ----------
+  routers:
+    # Auth — public routes (register, login) — no forwardAuth
+    auth-public:
+      rule: "PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`)"
+      entryPoints:
+        - web
+      middlewares:
+        - rate-limit-auth
+      service: auth-service
+      priority: 20
+
+    # Auth — protected routes (refresh, me, verify) — no forwardAuth needed (self-authenticating)
+    auth-protected:
+      rule: "PathPrefix(`/auth`)"
+      entryPoints:
+        - web
+      middlewares:
+        - rate-limit-auth
+      service: auth-service
+      priority: 10
+
+    # Patient service
+    patients:
+      rule: "PathPrefix(`/patients`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-forward
+      service: patient-service
+
+    # Appointment service
+    appointments:
+      rule: "PathPrefix(`/appointments`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-forward
+      service: appointment-service
+
+    # Clinical Notes service
+    notes:
+      rule: "PathPrefix(`/notes`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-forward
+      service: clinical-notes-service
+
+    # Billing service
+    invoices:
+      rule: "PathPrefix(`/invoices`) || PathPrefix(`/billing`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-forward
+      service: billing-service
+
+  # ---------- Services ----------
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth:8000"
+
+    patient-service:
+      loadBalancer:
+        servers:
+          - url: "http://patient:8000"
+
+    appointment-service:
+      loadBalancer:
+        servers:
+          - url: "http://appointment:8000"
+
+    clinical-notes-service:
+      loadBalancer:
+        servers:
+          - url: "http://clinical-notes:8000"
+
+    billing-service:
+      loadBalancer:
+        servers:
+          - url: "http://billing:8000"

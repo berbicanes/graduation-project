@@ -152,6 +152,28 @@ services:
     networks:
       - healthcare-net
 
+  traefik:
+    image: docker.io/library/traefik:v3.1
+    ports:
+      - "80:80"
+      - "8080:8080"    # Dashboard
+    volumes:
+      - ./services/api-gateway/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./services/api-gateway/dynamic:/etc/traefik/dynamic:ro
+    depends_on:
+      auth:
+        condition: service_healthy
+      patient:
+        condition: service_healthy
+      appointment:
+        condition: service_healthy
+      clinical-notes:
+        condition: service_healthy
+      billing:
+        condition: service_healthy
+    networks:
+      - healthcare-net
+
 volumes:
   postgres_data:
   rabbitmq_data:

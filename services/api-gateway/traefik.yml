@@ -1,0 +1,18 @@
+# Traefik Static Configuration
+api:
+  dashboard: true
+  insecure: true  # Dev only — exposes dashboard without auth
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: INFO
+
+accessLog: {}

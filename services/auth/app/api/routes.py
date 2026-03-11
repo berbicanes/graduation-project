@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user
@@ -59,7 +60,7 @@ async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)) -> d
     if not stored:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-    if stored.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if stored.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
         await delete_refresh_token(db, body.refresh_token)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
 
@@ -78,3 +79,21 @@ async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)) -> d
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.get("/verify")
+async def verify(current_user: User = Depends(get_current_user)) -> dict:
+    """Validate JWT and return user info in headers for Traefik ForwardAuth.
+
+    Traefik calls this endpoint for every protected request. On 200,
+    it copies the response headers (X-User-Id, X-User-Role, X-User-Email)
+    to the upstream request.
+    """
+    return JSONResponse(
+        content={"status": "authenticated"},
+        headers={
+            "X-User-Id": str(current_user.id),
+            "X-User-Role": current_user.role,
+            "X-User-Email": current_user.email,
+        },
+    )
