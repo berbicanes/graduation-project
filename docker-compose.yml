@@ -175,7 +175,7 @@ services:
       - healthcare-net
 
   prometheus:
-    image: docker.io/library/prom/prometheus:v2.53.0
+    image: prom/prometheus:v2.53.0
     ports:
       - "9090:9090"
     volumes:
@@ -196,7 +196,7 @@ services:
       - healthcare-net
 
   grafana:
-    image: docker.io/library/grafana/grafana:11.1.0
+    image: grafana/grafana:11.1.0
     ports:
       - "3000:3000"
     environment:
@@ -213,7 +213,7 @@ services:
       - healthcare-net
 
   loki:
-    image: docker.io/library/grafana/loki:3.1.0
+    image: grafana/loki:3.1.0
     ports:
       - "3100:3100"
     volumes:
@@ -223,7 +223,7 @@ services:
       - healthcare-net
 
   promtail:
-    image: docker.io/library/grafana/promtail:3.1.0
+    image: grafana/promtail:3.1.0
     volumes:
       - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
