@@ -22,11 +22,11 @@ def main(base_url: str) -> None:
 
     # ── 1. Register users ──────────────────────────────────────────────
     users = [
-        {"email": "admin@healthcare.local", "password": "Admin1234!", "full_name": "System Admin", "role": "admin"},
-        {"email": "dr.smith@healthcare.local", "password": "Doctor1234!", "full_name": "Dr. Sarah Smith", "role": "doctor"},
-        {"email": "dr.jones@healthcare.local", "password": "Doctor1234!", "full_name": "Dr. Michael Jones", "role": "doctor"},
-        {"email": "nurse.lee@healthcare.local", "password": "Nurse1234!", "full_name": "Emily Lee", "role": "nurse"},
-        {"email": "reception@healthcare.local", "password": "Recept1234!", "full_name": "James Wilson", "role": "receptionist"},
+        {"email": "admin@healthcare-demo.com", "password": "Admin1234!", "full_name": "System Admin", "role": "admin"},
+        {"email": "dr.smith@healthcare-demo.com", "password": "Doctor1234!", "full_name": "Dr. Sarah Smith", "role": "doctor"},
+        {"email": "dr.jones@healthcare-demo.com", "password": "Doctor1234!", "full_name": "Dr. Michael Jones", "role": "doctor"},
+        {"email": "nurse.lee@healthcare-demo.com", "password": "Nurse1234!", "full_name": "Emily Lee", "role": "nurse"},
+        {"email": "reception@healthcare-demo.com", "password": "Recept1234!", "full_name": "James Wilson", "role": "receptionist"},
     ]
 
     tokens: dict[str, str] = {}
@@ -42,8 +42,8 @@ def main(base_url: str) -> None:
 
     # Login as admin for subsequent calls
     for role, email, password in [
-        ("admin", "admin@healthcare.local", "Admin1234!"),
-        ("doctor", "dr.smith@healthcare.local", "Doctor1234!"),
+        ("admin", "admin@healthcare-demo.com", "Admin1234!"),
+        ("doctor", "dr.smith@healthcare-demo.com", "Doctor1234!"),
     ]:
         resp = client.post("/auth/login", json={"email": email, "password": password})
         if resp.status_code == 200:
@@ -269,8 +269,8 @@ def main(base_url: str) -> None:
     print(f"  Appointments: {len(appointment_ids)}")
     print(f"  Notes:        2")
     print(f"  Invoices:     3 (1 paid)")
-    print(f"\nAdmin login:  admin@healthcare.local / Admin1234!")
-    print(f"Doctor login: dr.smith@healthcare.local / Doctor1234!")
+    print(f"\nAdmin login:  admin@healthcare-demo.com / Admin1234!")
+    print(f"Doctor login: dr.smith@healthcare-demo.com / Doctor1234!")
 
 
 if __name__ == "__main__":
