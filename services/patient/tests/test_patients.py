@@ -84,7 +84,9 @@ class TestListPatients:
 
     async def test_list_pagination(self, client: AsyncClient, auth_headers: dict):
         for i in range(3):
-            await create_patient(client, auth_headers, {**PATIENT_DATA, "first_name": f"Patient{i}", "email": f"p{i}@test.com"})
+            await create_patient(
+                client, auth_headers, {**PATIENT_DATA, "first_name": f"Patient{i}", "email": f"p{i}@test.com"}
+            )
 
         response = await client.get("/patients?page=1&per_page=2", headers=auth_headers)
         data = response.json()
@@ -99,7 +101,11 @@ class TestListPatients:
 
     async def test_list_search(self, client: AsyncClient, auth_headers: dict):
         await create_patient(client, auth_headers)
-        await create_patient(client, auth_headers, {**PATIENT_DATA, "first_name": "Alice", "last_name": "Wonder", "email": "alice@test.com"})
+        await create_patient(
+            client,
+            auth_headers,
+            {**PATIENT_DATA, "first_name": "Alice", "last_name": "Wonder", "email": "alice@test.com"},
+        )
 
         response = await client.get("/patients?search=Alice", headers=auth_headers)
         data = response.json()

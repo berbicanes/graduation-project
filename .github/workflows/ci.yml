@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      auth: ${{ steps.filter.outputs.auth }}
+      patient: ${{ steps.filter.outputs.patient }}
+      appointment: ${{ steps.filter.outputs.appointment }}
+      clinical-notes: ${{ steps.filter.outputs.clinical-notes }}
+      billing: ${{ steps.filter.outputs.billing }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            auth:
+              - 'services/auth/**'
+            patient:
+              - 'services/patient/**'
+            appointment:
+              - 'services/appointment/**'
+            clinical-notes:
+              - 'services/clinical-notes/**'
+            billing:
+              - 'services/billing/**'
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - name: Ruff check
+        run: ruff check services/
+      - name: Ruff format check
+        run: ruff format --check services/
+
+  test:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: auth
+            path: services/auth
+            changed: ${{ needs.detect-changes.outputs.auth }}
+          - service: patient
+            path: services/patient
+            changed: ${{ needs.detect-changes.outputs.patient }}
+          - service: appointment
+            path: services/appointment
+            changed: ${{ needs.detect-changes.outputs.appointment }}
+          - service: clinical-notes
+            path: services/clinical-notes
+            changed: ${{ needs.detect-changes.outputs.clinical-notes }}
+          - service: billing
+            path: services/billing
+            changed: ${{ needs.detect-changes.outputs.billing }}
+    name: test (${{ matrix.service }})
+    if: >-
+      needs.detect-changes.outputs.auth == 'true' ||
+      needs.detect-changes.outputs.patient == 'true' ||
+      needs.detect-changes.outputs.appointment == 'true' ||
+      needs.detect-changes.outputs.clinical-notes == 'true' ||
+      needs.detect-changes.outputs.billing == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Skip if unchanged
+        if: matrix.changed != 'true'
+        run: echo "No changes in ${{ matrix.service }}, skipping." && exit 0
+      - name: Install dependencies
+        if: matrix.changed == 'true'
+        run: |
+          cd ${{ matrix.path }}
+          pip install -r requirements.txt
+      - name: Run tests
+        if: matrix.changed == 'true'
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+          JWT_SECRET: "ci-test-secret"
+          JWT_ALGORITHM: "HS256"
+          RABBITMQ_URL: "amqp://guest:guest@localhost:5672/"
+        run: |
+          cd ${{ matrix.path }}
+          pytest -v
+
+  build:
+    needs: [detect-changes, lint, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: auth
+            path: services/auth
+            changed: ${{ needs.detect-changes.outputs.auth }}
+          - service: patient
+            path: services/patient
+            changed: ${{ needs.detect-changes.outputs.patient }}
+          - service: appointment
+            path: services/appointment
+            changed: ${{ needs.detect-changes.outputs.appointment }}
+          - service: clinical-notes
+            path: services/clinical-notes
+            changed: ${{ needs.detect-changes.outputs.clinical-notes }}
+          - service: billing
+            path: services/billing
+            changed: ${{ needs.detect-changes.outputs.billing }}
+    name: build (${{ matrix.service }})
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip if unchanged
+        if: matrix.changed != 'true'
+        run: echo "No changes in ${{ matrix.service }}, skipping."
+      - name: Log in to GHCR
+        if: matrix.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        if: matrix.changed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.path }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}

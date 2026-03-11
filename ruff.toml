@@ -1,0 +1,21 @@
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B008",  # function calls in argument defaults — required by FastAPI Depends()
+]
+
+[lint.per-file-ignores]
+"**/alembic/versions/*.py" = ["UP007", "UP035"]  # auto-generated migration files
+
+[lint.isort]
+known-first-party = ["app"]

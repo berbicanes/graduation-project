@@ -17,7 +17,9 @@ async def register_user(client: AsyncClient, data: dict | None = None) -> dict:
     return response.json()
 
 
-async def login_user(client: AsyncClient, email: str = USER_DATA["email"], password: str = USER_DATA["password"]) -> dict:
+async def login_user(
+    client: AsyncClient, email: str = USER_DATA["email"], password: str = USER_DATA["password"]
+) -> dict:
     response = await client.post("/auth/login", json={"email": email, "password": password})
     return response.json()
 
@@ -58,7 +60,9 @@ class TestRegister:
 class TestLogin:
     async def test_login_success(self, client: AsyncClient):
         await register_user(client)
-        response = await client.post("/auth/login", json={"email": USER_DATA["email"], "password": USER_DATA["password"]})
+        response = await client.post(
+            "/auth/login", json={"email": USER_DATA["email"], "password": USER_DATA["password"]}
+        )
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data

@@ -119,7 +119,9 @@ class TestListInvoices:
     async def test_list_filter_by_patient(self, client: AsyncClient, auth_headers: dict):
         await create_invoice(client, auth_headers)
         other_patient = str(uuid.uuid4())
-        await create_invoice(client, auth_headers, make_invoice_data(patient_id=other_patient, appointment_id=str(uuid.uuid4())))
+        await create_invoice(
+            client, auth_headers, make_invoice_data(patient_id=other_patient, appointment_id=str(uuid.uuid4()))
+        )
 
         response = await client.get(f"/invoices?patient_id={PATIENT_ID}", headers=auth_headers)
         data = response.json()
@@ -224,7 +226,9 @@ class TestBillingSummary:
         await client.patch(f"/invoices/{created['id']}/pay", headers=auth_headers)
 
         # Create a draft invoice
-        await create_invoice(client, auth_headers, make_invoice_data(amount="50.00", status="draft", appointment_id=str(uuid.uuid4())))
+        await create_invoice(
+            client, auth_headers, make_invoice_data(amount="50.00", status="draft", appointment_id=str(uuid.uuid4()))
+        )
 
         response = await client.get("/billing/summary", headers=auth_headers)
         data = response.json()

@@ -19,7 +19,9 @@ async def create(
     current_user: CurrentUser = Depends(require_role("admin", "doctor", "nurse", "receptionist")),
 ) -> PatientResponse:
     patient = await create_patient(db, body)
-    await publish_event("patient.created", {"id": str(patient.id), "first_name": patient.first_name, "last_name": patient.last_name})
+    await publish_event(
+        "patient.created", {"id": str(patient.id), "first_name": patient.first_name, "last_name": patient.last_name}
+    )
     return PatientResponse.model_validate(patient)
 
 
@@ -63,7 +65,9 @@ async def update(
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     patient = await update_patient(db, patient, body)
-    await publish_event("patient.updated", {"id": str(patient.id), "first_name": patient.first_name, "last_name": patient.last_name})
+    await publish_event(
+        "patient.updated", {"id": str(patient.id), "first_name": patient.first_name, "last_name": patient.last_name}
+    )
     return PatientResponse.model_validate(patient)
 
 

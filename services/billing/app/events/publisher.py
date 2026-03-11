@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aio_pika
 
@@ -32,7 +32,7 @@ async def publish_event(routing_key: str, data: dict) -> None:
 
     message_body = {
         "event_type": routing_key,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "data": data,
     }
 

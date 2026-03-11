@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -24,16 +24,12 @@ async def create_invoice(db: AsyncSession, data: InvoiceCreate) -> Invoice:
 
     await db.refresh(invoice)
     # Eager load line_items after refresh
-    result = await db.execute(
-        select(Invoice).where(Invoice.id == invoice.id).options(selectinload(Invoice.line_items))
-    )
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice.id).options(selectinload(Invoice.line_items)))
     return result.scalar_one()
 
 
 async def get_invoice_by_id(db: AsyncSession, invoice_id: uuid.UUID) -> Invoice | None:
-    result = await db.execute(
-        select(Invoice).where(Invoice.id == invoice_id).options(selectinload(Invoice.line_items))
-    )
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice_id).options(selectinload(Invoice.line_items)))
     return result.scalar_one_or_none()
 
 
@@ -69,13 +65,11 @@ async def list_invoices(
 
 async def mark_invoice_paid(db: AsyncSession, invoice: Invoice) -> Invoice:
     invoice.status = "paid"
-    invoice.paid_at = datetime.now(timezone.utc)
+    invoice.paid_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(invoice)
     # Reload with line_items
-    result = await db.execute(
-        select(Invoice).where(Invoice.id == invoice.id).options(selectinload(Invoice.line_items))
-    )
+    result = await db.execute(select(Invoice).where(Invoice.id == invoice.id).options(selectinload(Invoice.line_items)))
     return result.scalar_one()
 
 
@@ -88,16 +82,24 @@ async def get_billing_summary(db: AsyncSession) -> dict:
     )
     total_revenue = revenue_result.scalar_one()
 
-    paid_result = await db.execute(select(func.count()).select_from(select(Invoice).where(Invoice.status == "paid").subquery()))
+    paid_result = await db.execute(
+        select(func.count()).select_from(select(Invoice).where(Invoice.status == "paid").subquery())
+    )
     total_paid = paid_result.scalar_one()
 
-    draft_result = await db.execute(select(func.count()).select_from(select(Invoice).where(Invoice.status == "draft").subquery()))
+    draft_result = await db.execute(
+        select(func.count()).select_from(select(Invoice).where(Invoice.status == "draft").subquery())
+    )
     total_draft = draft_result.scalar_one()
 
-    issued_result = await db.execute(select(func.count()).select_from(select(Invoice).where(Invoice.status == "issued").subquery()))
+    issued_result = await db.execute(
+        select(func.count()).select_from(select(Invoice).where(Invoice.status == "issued").subquery())
+    )
     total_issued = issued_result.scalar_one()
 
-    overdue_result = await db.execute(select(func.count()).select_from(select(Invoice).where(Invoice.status == "overdue").subquery()))
+    overdue_result = await db.execute(
+        select(func.count()).select_from(select(Invoice).where(Invoice.status == "overdue").subquery())
+    )
     total_overdue = overdue_result.scalar_one()
 
     return {

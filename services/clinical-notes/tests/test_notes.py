@@ -97,7 +97,9 @@ class TestListNotes:
     async def test_list_filter_by_patient(self, client: AsyncClient, auth_headers: dict):
         await create_note(client, auth_headers)
         other_patient = str(uuid.uuid4())
-        await create_note(client, auth_headers, make_note_data(patient_id=other_patient, appointment_id=str(uuid.uuid4())))
+        await create_note(
+            client, auth_headers, make_note_data(patient_id=other_patient, appointment_id=str(uuid.uuid4()))
+        )
 
         response = await client.get(f"/notes?patient_id={PATIENT_ID}", headers=auth_headers)
         data = response.json()
@@ -170,7 +172,9 @@ class TestUpdateNote:
         )
         assert response.status_code == 404
 
-    async def test_update_forbidden_for_patient(self, client: AsyncClient, auth_headers: dict, patient_role_headers: dict):
+    async def test_update_forbidden_for_patient(
+        self, client: AsyncClient, auth_headers: dict, patient_role_headers: dict
+    ):
         created = await create_note(client, auth_headers)
         note_id = created["id"]
 
@@ -225,7 +229,9 @@ class TestNoteHistory:
         response = await client.get(f"/notes/{note_id}/history", headers=nurse_headers)
         assert response.status_code == 200
 
-    async def test_history_forbidden_for_patient(self, client: AsyncClient, auth_headers: dict, patient_role_headers: dict):
+    async def test_history_forbidden_for_patient(
+        self, client: AsyncClient, auth_headers: dict, patient_role_headers: dict
+    ):
         created = await create_note(client, auth_headers)
         note_id = created["id"]
 

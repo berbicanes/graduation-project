@@ -124,7 +124,9 @@ async def reschedule(
     # Check for conflicts if time is being changed
     scheduled_at = body.scheduled_at or appointment.scheduled_at
     duration = body.duration_minutes or appointment.duration_minutes
-    conflict = await check_scheduling_conflict(db, appointment.doctor_id, scheduled_at, duration, exclude_id=appointment_id)
+    conflict = await check_scheduling_conflict(
+        db, appointment.doctor_id, scheduled_at, duration, exclude_id=appointment_id
+    )
     if conflict:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

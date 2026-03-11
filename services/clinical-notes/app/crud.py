@@ -57,9 +57,7 @@ async def list_notes(
     return notes, total
 
 
-async def update_note(
-    db: AsyncSession, note: ClinicalNote, data: NoteUpdate, changed_by: uuid.UUID
-) -> ClinicalNote:
+async def update_note(db: AsyncSession, note: ClinicalNote, data: NoteUpdate, changed_by: uuid.UUID) -> ClinicalNote:
     # Capture old values before mutation
     old_values = {
         "subjective": note.subjective,

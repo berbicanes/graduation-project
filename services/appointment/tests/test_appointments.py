@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -17,7 +17,7 @@ def make_appointment_data(
     duration_minutes: int = 30,
     reason: str = "Routine checkup",
 ) -> dict:
-    scheduled = datetime.now(timezone.utc) + timedelta(hours=hours_from_now)
+    scheduled = datetime.now(UTC) + timedelta(hours=hours_from_now)
     return {
         "patient_id": patient_id,
         "doctor_id": doctor_id,
@@ -82,7 +82,9 @@ class TestListAppointments:
     async def test_list_with_filters(self, client: AsyncClient, auth_headers: dict):
         await create_appointment(client, auth_headers)
         other_patient = str(uuid.uuid4())
-        await create_appointment(client, auth_headers, make_appointment_data(patient_id=other_patient, hours_from_now=96))
+        await create_appointment(
+            client, auth_headers, make_appointment_data(patient_id=other_patient, hours_from_now=96)
+        )
 
         response = await client.get(f"/appointments?patient_id={PATIENT_ID}", headers=auth_headers)
         data = response.json()
@@ -109,7 +111,7 @@ class TestReschedule:
         created = await create_appointment(client, auth_headers)
         appt_id = created["id"]
 
-        new_time = (datetime.now(timezone.utc) + timedelta(hours=120)).isoformat()
+        new_time = (datetime.now(UTC) + timedelta(hours=120)).isoformat()
         response = await client.put(
             f"/appointments/{appt_id}",
             json={"scheduled_at": new_time},
@@ -124,7 +126,7 @@ class TestReschedule:
 
         await client.patch(f"/appointments/{appt_id}/cancel", headers=auth_headers)
 
-        new_time = (datetime.now(timezone.utc) + timedelta(hours=120)).isoformat()
+        new_time = (datetime.now(UTC) + timedelta(hours=120)).isoformat()
         response = await client.put(
             f"/appointments/{appt_id}",
             json={"scheduled_at": new_time},

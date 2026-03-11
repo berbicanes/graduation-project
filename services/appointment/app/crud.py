@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,15 +95,15 @@ async def check_scheduling_conflict(
     for appt in existing:
         appt_start = appt.scheduled_at
         if appt_start.tzinfo is None:
-            appt_start = appt_start.replace(tzinfo=timezone.utc)
+            appt_start = appt_start.replace(tzinfo=UTC)
         appt_end = appt_start + timedelta(minutes=appt.duration_minutes)
 
         check_start = start
         if check_start.tzinfo is None:
-            check_start = check_start.replace(tzinfo=timezone.utc)
+            check_start = check_start.replace(tzinfo=UTC)
         check_end = end
         if check_end.tzinfo is None:
-            check_end = check_end.replace(tzinfo=timezone.utc)
+            check_end = check_end.replace(tzinfo=UTC)
 
         if check_start < appt_end and check_end > appt_start:
             return True
@@ -121,7 +121,9 @@ async def create_doctor_availability(db: AsyncSession, data: DoctorAvailabilityC
 
 async def get_doctor_availability(db: AsyncSession, doctor_id: uuid.UUID) -> list[DoctorAvailability]:
     result = await db.execute(
-        select(DoctorAvailability).where(DoctorAvailability.doctor_id == doctor_id).order_by(DoctorAvailability.day_of_week)
+        select(DoctorAvailability)
+        .where(DoctorAvailability.doctor_id == doctor_id)
+        .order_by(DoctorAvailability.day_of_week)
     )
     return list(result.scalars().all())
 

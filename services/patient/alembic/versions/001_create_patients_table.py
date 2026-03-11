@@ -5,11 +5,12 @@ Revises:
 Create Date: 2026-02-26
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 
 revision: str = "001"
 down_revision: Union[str, None] = None

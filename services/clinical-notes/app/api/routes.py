@@ -30,7 +30,9 @@ async def list_all(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> PaginatedNoteResponse:
-    notes, total = await list_notes(db, page=page, per_page=per_page, patient_id=patient_id, appointment_id=appointment_id)
+    notes, total = await list_notes(
+        db, page=page, per_page=per_page, patient_id=patient_id, appointment_id=appointment_id
+    )
     return PaginatedNoteResponse(
         total=total,
         page=page,

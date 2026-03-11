@@ -1,0 +1,43 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [auth, patient, appointment, clinical-notes, billing]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.service }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Update Kubernetes deployment
+        if: hashFiles('k8s/${{ matrix.service }}/deployment.yml') != ''
+        run: |
+          echo "Would apply k8s/${{ matrix.service }}/ manifests with image tag ${{ github.sha }}"
+          echo "Uncomment below when cluster is configured:"
+          echo "# kubectl set image deployment/${{ matrix.service }} ${{ matrix.service }}=ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} -n healthcare"
