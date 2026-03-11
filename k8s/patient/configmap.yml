@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patient-config
+  namespace: healthcare
+data:
+  JWT_ALGORITHM: "HS256"

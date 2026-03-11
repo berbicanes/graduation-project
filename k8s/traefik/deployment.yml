@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: healthcare
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik
+      containers:
+        - name: traefik
+          image: traefik:v3.1
+          args:
+            - --api.dashboard=true
+            - --api.insecure=true
+            - --entrypoints.web.address=:80
+            - --providers.file.directory=/etc/traefik/dynamic
+            - --providers.file.watch=true
+            - --log.level=INFO
+            - --accesslog=true
+          ports:
+            - containerPort: 80
+              name: web
+            - containerPort: 8080
+              name: dashboard
+          volumeMounts:
+            - name: traefik-dynamic
+              mountPath: /etc/traefik/dynamic
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: traefik-dynamic
+          configMap:
+            name: traefik-dynamic-config

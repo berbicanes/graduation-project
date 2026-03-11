@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: healthcare
+spec:
+  type: LoadBalancer
+  selector:
+    app: traefik
+  ports:
+    - port: 80
+      targetPort: 80
+      name: web
+    - port: 8080
+      targetPort: 8080
+      name: dashboard
