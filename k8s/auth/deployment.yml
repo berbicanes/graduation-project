@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: auth
-          image: ghcr.io/berbicanes/graduation-project/auth:latest
+          image: graduation-project-auth:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:

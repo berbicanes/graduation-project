@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: appointment
-          image: ghcr.io/berbicanes/graduation-project/appointment:latest
+          image: graduation-project-appointment:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:

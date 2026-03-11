@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: billing
-          image: ghcr.io/berbicanes/graduation-project/billing:latest
+          image: graduation-project-billing:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
