@@ -1,25 +1,37 @@
 import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+from pythonjsonlogger.json import JsonFormatter as jsonlogger_JsonFormatter
 
 from app.api.routes import router as billing_router
 from app.config import settings
 from app.events.consumer import close_consumer, start_consumer
 from app.events.publisher import close_connection as close_publisher
 
+# Structured JSON logging
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(
+    jsonlogger_JsonFormatter(
+        fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
+        rename_fields={"asctime": "timestamp", "levelname": "level", "name": "service"},
+    )
+)
+logging.root.handlers = [handler]
+logging.root.setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start RabbitMQ consumer as a background task
     consumer_task = asyncio.create_task(start_consumer())
     logger.info("Started RabbitMQ consumer background task")
     yield
-    # Shutdown
     consumer_task.cancel()
     try:
         await consumer_task
@@ -38,6 +50,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Instrumentator().instrument(app).expose(app)
 
 app.include_router(billing_router)
 

@@ -174,9 +174,70 @@ services:
     networks:
       - healthcare-net
 
+  prometheus:
+    image: docker.io/library/prom/prometheus:v2.53.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      auth:
+        condition: service_healthy
+      patient:
+        condition: service_healthy
+      appointment:
+        condition: service_healthy
+      clinical-notes:
+        condition: service_healthy
+      billing:
+        condition: service_healthy
+    networks:
+      - healthcare-net
+
+  grafana:
+    image: docker.io/library/grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - healthcare-net
+
+  loki:
+    image: docker.io/library/grafana/loki:3.1.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - healthcare-net
+
+  promtail:
+    image: docker.io/library/grafana/promtail:3.1.0
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - healthcare-net
+
 volumes:
   postgres_data:
   rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
 
 networks:
   healthcare-net:
